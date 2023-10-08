@@ -12,8 +12,6 @@ pub(crate) unsafe fn grab<T>(original: &mut T) -> T {
     holder
 }
 
-const LICENSE_LIST_JSON: &[u8] = include_bytes!("../spdx-licenses/json/licenses.json");
-
 /// A unique identifier for a given package
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum CratePackageUID<C, N, V, S> {
@@ -73,5 +71,7 @@ pub enum PackageManager {
     Cargo,
     // TODO: Add PNPM/NPM/Yarn/Bun/pub, etc.
 }
+
+pub mod license;
 
 pub mod cargo;
