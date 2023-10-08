@@ -1,6 +1,13 @@
-use std::{ops::Deref, path::Path, rc::Rc, str::FromStr};
+use std::{
+    collections::HashMap,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+    path::Path,
+    rc::Rc,
+    str::FromStr,
+};
 
-use cargo_lock::{dependency::Tree, Lockfile, Package};
+use cargo_lock::{dependency::Tree, Dependency, Lockfile, Package};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CargoError {
@@ -24,6 +31,12 @@ impl Deref for CargoLicenses {
     }
 }
 
+impl DerefMut for CargoLicenses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.lockfile
+    }
+}
+
 impl CargoLicenses {
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
         Ok(Self {
@@ -37,9 +50,23 @@ impl CargoLicenses {
         })
     }
 
-    pub fn foreach(&self) -> Result<()> {
-        for package in &self.packages {
+    pub fn foreach(mut self) -> Result<()> {
+        let mut dependency_map = HashMap::<String, Rc<Vec<Dependency>>>::new();
+
+        for package in &mut self.packages {
+            let package_deps = {
+                let mut deps: Vec<Dependency> = vec![];
+
+                std::mem::swap(&mut deps, &mut package.dependencies);
+
+                Rc::new(deps)
+            };
             let package = Rc::new(package.clone());
+
+            dependency_map.insert(
+                format!("{}@{}", package.name, package.version),
+                package_deps.clone(),
+            );
             let Some(ref pkg_source) = package.source else {
                 return Err(CargoError::MissingPackageSource(package.clone()));
             };
