@@ -7,7 +7,13 @@ use std::{
     str::FromStr,
 };
 
-use cargo_lock::{dependency::Tree, Dependency, Lockfile, Package};
+use cargo_lock::{
+    dependency::Tree, Checksum, Dependency, Lockfile, Name, Package, SourceId, Version,
+};
+
+use crate::{CratePackageUID, UID};
+
+pub type PackageUID = CratePackageUID<Checksum, Name, Version, SourceId>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CargoError {
@@ -51,27 +57,48 @@ impl CargoLicenses {
     }
 
     pub fn foreach(mut self) -> Result<()> {
-        let mut dependency_map = HashMap::<String, Rc<Vec<Dependency>>>::new();
+        let mut dependency_map = HashMap::<PackageUID, Rc<Vec<Dependency>>>::new();
 
         for package in &mut self.packages {
-            let package_deps = {
-                let mut deps: Vec<Dependency> = vec![];
+            let package_deps = Rc::new(unsafe { crate::grab(&mut package.dependencies) });
 
-                std::mem::swap(&mut deps, &mut package.dependencies);
-
-                Rc::new(deps)
-            };
             let package = Rc::new(package.clone());
 
-            dependency_map.insert(
-                format!("{}@{}", package.name, package.version),
-                package_deps.clone(),
-            );
+            dependency_map.insert(package.uid(), package_deps.clone());
+
             let Some(ref pkg_source) = package.source else {
                 return Err(CargoError::MissingPackageSource(package.clone()));
             };
         }
 
         Ok(())
+    }
+}
+
+impl crate::UID<PackageUID> for Package {
+    fn uid(&self) -> PackageUID {
+        self.clone().into()
+    }
+}
+
+impl From<Package> for PackageUID {
+    fn from(value: Package) -> Self {
+        match value {
+            Package {
+                checksum: Some(sum),
+                ..
+            } => PackageUID::Checksum(sum),
+            Package {
+                name,
+                version,
+                source: Some(source),
+                ..
+            } => PackageUID::NameVersionAndSource {
+                name,
+                version,
+                source,
+            },
+            Package { name, version, .. } => PackageUID::NameAndVersion { name, version },
+        }
     }
 }

@@ -3,7 +3,28 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+/// Effectively "takes" the value out of `original`, and replaces it with [`std::mem::zeroed()`]
+pub(crate) unsafe fn grab<T>(original: &mut T) -> T {
+    let mut holder: T = std::mem::zeroed();
+
+    std::mem::swap(&mut holder, original);
+
+    holder
+}
+
 const LICENSE_LIST_JSON: &[u8] = include_bytes!("../spdx-licenses/json/licenses.json");
+
+/// A unique identifier for a given package
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum CratePackageUID<C, N, V, S> {
+    Checksum(C),
+    NameAndVersion { name: N, version: V },
+    NameVersionAndSource { name: N, version: V, source: S },
+}
+
+pub trait UID<U> {
+    fn uid(&self) -> U;
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Package {
