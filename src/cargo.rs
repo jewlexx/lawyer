@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
 use cargo_lock::{dependency::Tree, Lockfile};
 
@@ -18,6 +18,12 @@ impl CargoLicenses {
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
         Ok(Self {
             lockfile: Lockfile::load(path)?,
+        })
+    }
+
+    pub fn from_lockfile(lockfile: impl AsRef<str>) -> Result<Self> {
+        Ok(Self {
+            lockfile: Lockfile::from_str(lockfile.as_ref())?,
         })
     }
 
