@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+
 use serde::{Deserialize, Serialize};
 use url::Url;
 
