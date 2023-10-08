@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+const LICENSE_LIST_JSON: &[u8] = include_bytes!("../spdx-licenses/json/licenses.json");
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Package {
     package_name: String,
