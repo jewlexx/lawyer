@@ -70,4 +70,5 @@ pub enum PackageManager {
 
 pub mod license;
 
+#[cfg(feature = "cargo")]
 pub mod cargo;
