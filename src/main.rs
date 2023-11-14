@@ -1,3 +1,5 @@
+use lawyer::cargo::Licenses;
+
 fn main() {
-    println!("Hello, world!");
+    dbg!(Licenses::load("./Cargo.lock").unwrap());
 }

@@ -25,6 +25,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Debug)]
 pub struct Licenses {
     lockfile: Lockfile,
 }
@@ -43,20 +44,31 @@ impl DerefMut for Licenses {
     }
 }
 
+pub type DependencyMap =
+    HashMap<CratePackageUID<Checksum, Name, Version, SourceId>, Rc<Vec<Dependency>>>;
+
 impl Licenses {
+    /// Loads the lockfile from `path`
+    ///
+    /// # Errors
+    /// Loading the lockfile fails for whatever reason. See [`cargo_lock::error::Error`] for more information
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
         Ok(Self {
             lockfile: Lockfile::load(path)?,
         })
     }
 
+    /// Loads the lockfile from its contents
+    ///
+    /// # Errors
+    /// Loading the lockfile fails for whatever reason. See [`cargo_lock::error::Error`] for more information
     pub fn from_lockfile(lockfile: impl AsRef<str>) -> Result<Self> {
         Ok(Self {
             lockfile: Lockfile::from_str(lockfile.as_ref())?,
         })
     }
 
-    pub fn foreach(mut self) -> Result<()> {
+    pub fn create_map(mut self) -> Result<DependencyMap> {
         let mut dependency_map = HashMap::<PackageUID, Rc<Vec<Dependency>>>::new();
 
         for package in &mut self.packages {
@@ -71,7 +83,7 @@ impl Licenses {
             };
         }
 
-        Ok(())
+        Ok(dependency_map)
     }
 }
 

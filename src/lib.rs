@@ -8,6 +8,20 @@ pub(crate) unsafe fn grab<T>(original: &mut T) -> T {
     std::mem::replace(original, std::mem::zeroed())
 }
 
+pub trait Grab
+where
+    Self: Sized,
+{
+    /// Grabs the value of `self`, and replaces it with [`std::mem::zeroed()`]
+    ///
+    /// # Safety
+    /// This calls [`std::mem::zeroed()`], and as such, any future use of the original variable is undefined behavior.
+    #[must_use]
+    unsafe fn grab(&mut self) -> Self {
+        std::mem::replace(self, std::mem::zeroed())
+    }
+}
+
 /// A unique identifier for a given package
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum CratePackageUID<C, N, V, S> {
