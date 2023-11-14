@@ -16,20 +16,20 @@ use crate::{CratePackageUID, UID};
 pub type PackageUID = CratePackageUID<Checksum, Name, Version, SourceId>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum CargoError {
+pub enum Error {
     #[error("Cargo lockfile error {0}")]
     CargoLockError(#[from] cargo_lock::Error),
     #[error("Package {}:{} is missing a source", .0.name, .0.version)]
     MissingPackageSource(Rc<Package>),
 }
 
-pub type Result<T> = std::result::Result<T, CargoError>;
+pub type Result<T> = std::result::Result<T, Error>;
 
-pub struct CargoLicenses {
+pub struct Licenses {
     lockfile: Lockfile,
 }
 
-impl Deref for CargoLicenses {
+impl Deref for Licenses {
     type Target = Lockfile;
 
     fn deref(&self) -> &Self::Target {
@@ -37,13 +37,13 @@ impl Deref for CargoLicenses {
     }
 }
 
-impl DerefMut for CargoLicenses {
+impl DerefMut for Licenses {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.lockfile
     }
 }
 
-impl CargoLicenses {
+impl Licenses {
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
         Ok(Self {
             lockfile: Lockfile::load(path)?,
@@ -67,7 +67,7 @@ impl CargoLicenses {
             dependency_map.insert(package.uid(), package_deps.clone());
 
             let Some(ref pkg_source) = package.source else {
-                return Err(CargoError::MissingPackageSource(package.clone()));
+                return Err(Error::MissingPackageSource(package.clone()));
             };
         }
 
