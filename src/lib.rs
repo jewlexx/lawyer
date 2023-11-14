@@ -3,13 +3,9 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-/// Effectively "takes" the value out of `original`, and replaces it with [`std::mem::zeroed()`]
+/// Grabs the value out of `original`, and replaces it with [`std::mem::zeroed()`]
 pub(crate) unsafe fn grab<T>(original: &mut T) -> T {
-    let mut holder: T = std::mem::zeroed();
-
-    std::mem::swap(&mut holder, original);
-
-    holder
+    std::mem::replace(original, std::mem::zeroed())
 }
 
 /// A unique identifier for a given package
