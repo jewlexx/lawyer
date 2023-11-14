@@ -64,6 +64,7 @@ impl License {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum PackageManager {
+    #[cfg(feature = "cargo")]
     Cargo,
     // TODO: Add PNPM/NPM/Yarn/Bun/pub, etc.
 }
